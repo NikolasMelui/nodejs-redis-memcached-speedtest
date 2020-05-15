@@ -1,17 +1,28 @@
 'use strict';
 
 const http = require('http');
+const url = require('url');
+
+const filesystem = require('./services/filesystem');
+
 const { APPLICATION_HOST, APPLICATION_PORT } = require('./config');
-const { getApplicationHost, getApplicationPort } = require('./helpers');
 
 http
-  .createServer((req, res) => {
-    res.writeHead(200, 'OK', { 'Content-Type': 'text/plain' });
-    res.end(
-      `Hello from ${getApplicationHost(req)}:${getApplicationPort(
-        req,
-      )} and welcome to the nikolasmelui-node-boilerplate!`,
-    );
+  .createServer(async (req, res) => {
+    const parsedUrl = url.parse(req.url, true);
+
+    res.writeHead(200, 'OK', { 'Content-Type': 'application/json' });
+
+    if (parsedUrl.pathname === '/') {
+      try {
+        const serverData = await filesystem.getServerData();
+        const strServerData = JSON.stringify(serverData);
+        res.end(strServerData);
+      } catch (error) {
+        console.info('Filesystem module error: \n');
+        console.error(error);
+      }
+    }
   })
   .listen(APPLICATION_PORT, APPLICATION_HOST, () =>
     console.log(
